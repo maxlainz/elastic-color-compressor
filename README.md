@@ -87,6 +87,7 @@ Controls are grouped top to bottom: *Working Space*, **Target** (color and outpu
 | **Luma Compress** | 0 | 0-0.99 | How strongly Oklab lightness is pulled toward the target's lightness. |
 | Mix | 1.0 | 0-1 | Scales all three strengths. Mix 0 returns the input. |
 | Output Zone Alpha | off | checkbox | Writes the **zone weight** (where the compressor acts, 0 to 1) to alpha, multiplied by the input alpha. Off = the input alpha passes through. For viewing the zone only. |
+| Show Target | off | checkbox | Fills the whole frame with the target color, in the working space. Through the Output Transform it shows the color the target renders to: use it to check the delivered hex (see below). |
 
 Compress 0.99 is the maximum: at 1.0 the curve would flatten to a step and posterize.
 
@@ -96,7 +97,7 @@ With *Target Output* on an ACES 2.0 option, a pixel of exactly the target color 
 
 1. **The node must be the last grade before the Output Transform.** Any node after it (a look, a grade, a film emulation) moves the color again.
 2. **Resolve's output must be the same transform:** ACES 2.0, SDR 100 nits, Rec.709 limiting primaries, with the Rec.709 BT.1886 (gamma 2.4) display for *ACES 2.0 SDR Rec.709* or the sRGB display for *ACES 2.0 SDR sRGB*. HDR outputs are not implemented: with an HDR output the target is still the scene color defined by the SDR transform, which renders to a different value in HDR.
-3. **Check the result in Resolve.** Render a patch of the target (for example a solid of the target color through the same node tree) and read the delivered code values with the color picker or a scope. That render is the final check; the numerical tests do not replace it.
+3. **Check the result in Resolve.** Turn on *Show Target*: the frame becomes the target color, through the rest of the pipeline. Render it in the delivery format and read the code values of the file (or Resolve's color picker / a scope on the output). They should be the hex. That render is the final check; the numerical tests do not replace it. Turn *Show Target* off again.
 
 ## How it works
 

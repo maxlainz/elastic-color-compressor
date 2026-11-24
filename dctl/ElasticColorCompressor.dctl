@@ -51,6 +51,7 @@ DEFINE_UI_PARAMS(satCompress,  Sat Compress,        DCTLUI_SLIDER_FLOAT, 0.3,  0
 DEFINE_UI_PARAMS(lumaCompress, Luma Compress,       DCTLUI_SLIDER_FLOAT, 0.0,  0.0,  0.99, 0.01)
 DEFINE_UI_PARAMS(mix,          Mix,                 DCTLUI_SLIDER_FLOAT, 1.0,  0.0,  1.0, 0.01)
 DEFINE_UI_PARAMS(outputAlpha,  Output Zone Alpha,   DCTLUI_CHECK_BOX, 0)
+DEFINE_UI_PARAMS(showTarget,   Show Target,         DCTLUI_CHECK_BOX, 0)
 DEFINE_UI_TOOLTIP(Target Color, "Brand colour as it must appear in the delivered master. Paste the hex in the colour dialog.")
 DEFINE_UI_TOOLTIP(Target Output, "What the hex is: ACES 2.0 SDR 100-nit Rec.709 or sRGB display code values, or code values in the working space.")
 DEFINE_UI_TOOLTIP(Working Space, "The space the node receives. Input and output stay in it.")
@@ -886,7 +887,8 @@ __DEVICE__ float4 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
     // --- target: picker code values (uniform), to scene XYZ per Target Output ---
     // Oklab a, b are measured from the grey axis: with these matrices a grey has (a, b) = L * (NA, NB),
     // not (0, 0) (Oklab M1 vs D65 rounding). Shearing it out makes C = 0 exactly on greys, so greys never move.
-    float3 tl = xyz_to_oklab(target_xyz(make_float3(target.r, target.g, target.b), targetOutput, ws));   // the picker is not a float3
+    float3 txyz = target_xyz(make_float3(target.r, target.g, target.b), targetOutput, ws);   // the picker is not a float3
+    float3 tl = xyz_to_oklab(txyz);
     float tL = tl.x;
     float ta = tl.y - tL * NEUTRAL_A, tb = tl.z - tL * NEUTRAL_B;
     float tCr = _sqrtf(ta * ta + tb * tb);
@@ -954,5 +956,10 @@ __DEVICE__ float4 transform(int p_Width, int p_Height, int p_X, int p_Y, float p
     float3 rgb = encode_log(outl, ws);
 
     float alphaOut = outputAlpha ? zone * p_A : p_A;
+    // Show Target: the whole frame is the target colour in the working space (to certify the delivered hex)
+    if (showTarget) {                                                // UI checkbox, uniform: not a mask
+        rgb = encode_log(xyz_to_rgb(txyz, ws), ws);
+        alphaOut = p_A;
+    }
     return make_float4(rgb.x, rgb.y, rgb.z, alphaOut);
 }

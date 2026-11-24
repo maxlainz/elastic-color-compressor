@@ -87,6 +87,7 @@ UI_SPEC = [
     "DEFINE_UI_PARAMS(lumaCompress, Luma Compress, DCTLUI_SLIDER_FLOAT, 0.0, 0.0, 0.99, 0.01)",
     "DEFINE_UI_PARAMS(mix, Mix, DCTLUI_SLIDER_FLOAT, 1.0, 0.0, 1.0, 0.01)",
     "DEFINE_UI_PARAMS(outputAlpha, Output Zone Alpha, DCTLUI_CHECK_BOX, 0)",
+    "DEFINE_UI_PARAMS(showTarget, Show Target, DCTLUI_CHECK_BOX, 0)",
 ]
 ui_lines = [re.sub(r"\s+", " ", ln).strip() for ln in TEXT.splitlines() if ln.startswith("DEFINE_UI_PARAMS")]
 ui_lines = [re.sub(r"\(\s*", "(", re.sub(r",\s*", ", ", ln)) for ln in ui_lines]
@@ -263,7 +264,7 @@ class Dctl:
 # the DCTL's parameter order, read from the DCTL (ecc_set() takes them in this order)
 ORDER = re.findall(r"^DEFINE_UI_PARAMS\((\w+)", TEXT, re.M)
 DEFAULTS = dict(workingSpace=0, targetOutput=0, target=(0.0, 48 / 255, 135 / 255), hueCompress=0.5, satCompress=0.3,
-                lumaCompress=0.0, hueRange=25.0, satRange=0.7, lumaRange=0.25, mix=1.0, outputAlpha=0)
+                lumaCompress=0.0, hueRange=25.0, satRange=0.7, lumaRange=0.25, mix=1.0, outputAlpha=0, showTarget=0)
 STRONG = dict(hueCompress=0.99, satCompress=0.99, lumaCompress=0.99)
 F32, F64 = Dctl(False), Dctl(True)
 rng = np.random.default_rng(7)
@@ -496,6 +497,33 @@ for srgb, disp in ((0, "Rec.1886 Rec.709 - Display"), (1, "sRGB - Display")):
     check(np.all(err[in_nw] <= err_ref[in_nw] + 0.02),
           f"{disp}: within 3 codes of white, {in_nw.sum()} colours: no worse than OCIO's own inverse + 0.02/255 "
           f"(max {err[in_nw].max():.3f}/255, OCIO's own {err_ref[in_nw].max():.3f}/255; see Limitations in README)")
+
+# =====================================================================
+# 12. Show Target: the frame is the target in the working space; through OCIO it is the hex
+# =====================================================================
+c = np.array([[0.1, 0.5, 0.9], [0.4, 0.4, 0.4]])
+for ws, name in enumerate(WS):
+    for to in range(3):
+        F32.set(workingSpace=ws, targetOutput=to, showTarget=1)
+        out = F32.run(c, 0.3)
+        check(np.allclose(out[:, :3], F32.target_codes(ws), rtol=0, atol=1e-6) and np.all(out[:, 3] == np.float32(0.3)),
+              f"{name}, Target Output {to}: Show Target outputs the target codes and passes the alpha")
+AP1_TO_AP0 = np.linalg.inv(np.array([[1.4514393161, -0.2365107469, -0.2149285693],
+                                     [-0.0765537734, 1.1762296998, -0.0996759264],
+                                     [0.0083161484, -0.0060324498, 0.9977163014]]))
+for srgb, disp in ((0, "Rec.1886 Rec.709 - Display"), (1, "sRGB - Display")):
+    worst = worst_lin = 0.0
+    for h in BRANDS:
+        hexv = np.array([int(h[i:i + 2], 16) for i in (0, 2, 4)]) / 255
+        F32.set(workingSpace=0, targetOutput=srgb, target=tuple(hexv), showTarget=1)
+        ap0 = np.ascontiguousarray(F64.curve(0, F32.run(c[:1])[:, :3], False) @ AP1_TO_AP0.T, np.float32)
+        CFG.getProcessor("ACES2065-1", disp, VIEW, ocio.TRANSFORM_DIR_FORWARD).getDefaultCPUProcessor().applyRGB(ap0)
+        ok_codes = hexv >= 12 / 255 if not srgb else np.ones(3, bool)   # BT.1886: dark channels in linear light
+        worst = max(worst, (np.abs(ap0[0] - hexv) * 255)[ok_codes].max(initial=0))
+        worst_lin = max(worst_lin, np.abs(np.clip(ap0[0], 0, None) ** 2.4 - hexv ** 2.4)[~ok_codes].max(initial=0))
+    check(worst <= 0.05 and worst_lin <= 3e-5,
+          f"{disp}: Show Target in ACEScct through the OCIO ACES 2.0 view = hex for the brand colours (max "
+          f"{worst:.4f}/255; channels below 12/255 of BT.1886 in linear light, max {worst_lin:.1e} of white)")
 
 print()
 if FAIL:
