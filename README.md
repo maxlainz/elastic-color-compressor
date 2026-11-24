@@ -2,23 +2,13 @@
 
 An elastic color compressor for DaVinci Resolve, written as a single DCTL file.
 
+![A lattice of colors bending toward the target as the strength rises](docs/img/warp.gif)
+
+*A lattice of colors bending toward the target `#8E44AD` (ring) as the strength rises: the pull fades with distance, greys stay put, and the lattice bends but never folds. Computed by the DCTL; see [In pictures](#in-pictures).*
+
 Pick a target color (a brand color, a product, a sky) and colors near it are pulled toward it in hue, saturation and lightness, like a color compressor, but with smooth elastic curves instead of a key. There are no masks or qualifiers: neighboring colors move together, so a gradient stays a gradient (no inversions, no steps, no banding), and an exposure ramp stays an exposure ramp. Work happens in Oklab. A soft "zone weight" can also be written to the alpha channel.
 
 The target is entered in a color picker as the **hex value the color must have in the delivered master**, so a brand hex can be pasted directly. In an ACES 2.0 pipeline the node computes, with the inverse ACES 2.0 Output Transform, the scene color that the Output Transform renders to that hex, and pulls colors toward it.
-
-## Contents
-
-- [Install](#install)
-- [Working spaces](#working-spaces)
-- [Quick start](#quick-start)
-- [Parameters](#parameters)
-- [Certifying the brand color](#certifying-the-brand-color)
-- [How it works](#how-it-works)
-- [Design guarantees](#design-guarantees)
-- [Limitations](#limitations)
-- [Development](#development)
-- [Contributing](#contributing)
-- [License](#license)
 
 ## Install
 
@@ -63,7 +53,7 @@ With the two ACES 2.0 options, the target is the scene color that the ACES 2.0 O
 
 ## Quick start
 
-1. **Set the target.** Click the *Target Color* swatch and paste the hex value (in the color dialog, the hex field is in the RGB sliders panel on macOS and labeled *HTML* in Qt dialogs). Set *Target Output* to the master you deliver (see [Working spaces](#working-spaces)).
+1. **Set the target.** Click the *Target Color* swatch and paste the hex value (on macOS the hex field of the color dialog is in its RGB sliders panel). Set *Target Output* to the master you deliver (see [Working spaces](#working-spaces)).
 2. **See the zone.** Temporarily turn on *Output Zone Alpha* and view the alpha with Resolve's **Highlight** (Shift+H) and *Use OFX Alpha* on the node. Adjust *Zone Hue Range*, *Zone Sat Range* and *Zone Luma Range* until the zone covers the colors you want to pull. Turn *Output Zone Alpha* off again before grading (see [Limitations](#limitations)).
 3. **Pull.** Raise *Hue Compress* first, then *Sat Compress*. *Luma Compress* is off by default: it pulls lightness toward the target's lightness and is the strongest move.
 4. **Blend.** Use *Mix* to back the whole effect off.
@@ -72,19 +62,19 @@ Always test with a continuous hue ramp and an exposure ramp as well as real foot
 
 ## Parameters
 
-Controls are grouped top to bottom: *Working Space*, **Target** (color and output), **Zone** (which colors are pulled), **Compress** (how hard each axis is pulled), then *Mix* and *Output Zone Alpha*.
+Controls are grouped top to bottom: *Working Space*, **Target** (color and output), **Compress** (how hard each axis is pulled), **Zone** (which colors are pulled), then *Mix*, *Output Zone Alpha* and *Show Target*.
 
 | Control | Default | Range | What it does |
 |---|---|---|---|
 | Working Space | ACEScct | see above | Input and output space. Only changes the conversion to and from Oklab. |
 | **Target Color** | #003087 | color picker | The color others are pulled toward, as the hex it must have in the delivered master. |
 | **Target Output** | ACES 2.0 SDR Rec.709 | ACES 2.0 SDR Rec.709, ACES 2.0 SDR sRGB, None - node code values | What the hex is: display code values of the ACES 2.0 SDR 100-nit Output Transform (Rec.709 BT.1886 or sRGB display), or code values in the working space. See [Working spaces](#working-spaces). |
-| **Zone Hue Range deg** | 25 | 3-120 | Width of the zone around the target hue. Wider = more hues pulled, gentler per hue. |
-| **Zone Sat Range** | 0.7 | 0.1-3 | Width of the zone around the target saturation, in natural-log units of chroma / lightness (0.7 = roughly half to double). |
-| **Zone Luma Range** | 0.25 | 0.02-1 | Width of the zone around the target lightness (Oklab L). Shapes the luma pull and the zone alpha only. |
 | **Hue Compress** | 0.5 | 0-0.99 | How strongly hue is pulled toward the target hue. |
 | **Sat Compress** | 0.3 | 0-0.99 | How strongly saturation is pulled toward the target's saturation. |
 | **Luma Compress** | 0 | 0-0.99 | How strongly Oklab lightness is pulled toward the target's lightness. |
+| **Zone Hue Range deg** | 25 | 3-120 | Width of the zone around the target hue. Wider = more hues pulled, gentler per hue. |
+| **Zone Sat Range** | 0.7 | 0.1-3 | Width of the zone around the target saturation, in natural-log units of chroma / lightness (0.7 = roughly half to double). |
+| **Zone Luma Range** | 0.25 | 0.02-1 | Width of the zone around the target lightness (Oklab L). Shapes the luma pull and the zone alpha only. |
 | Mix | 1.0 | 0-1 | Scales all three strengths. Mix 0 returns the input. |
 | Output Zone Alpha | off | checkbox | Writes the **zone weight** (where the compressor acts, 0 to 1) to alpha, multiplied by the input alpha. Off = the input alpha passes through. For viewing the zone only. |
 | Show Target | off | checkbox | Fills the whole frame with the target color, in the working space. Through the Output Transform it shows the color the target renders to: use it to check the delivered hex (see below). |
@@ -97,17 +87,13 @@ With *Target Output* on an ACES 2.0 option, a pixel of exactly the target color 
 
 1. **The node must be the last grade before the Output Transform.** Any node after it (a look, a grade, a film emulation) moves the color again.
 2. **Resolve's output must be the same transform:** ACES 2.0, SDR 100 nits, Rec.709 limiting primaries, with the Rec.709 BT.1886 (gamma 2.4) display for *ACES 2.0 SDR Rec.709* or the sRGB display for *ACES 2.0 SDR sRGB*. HDR outputs are not implemented: with an HDR output the target is still the scene color defined by the SDR transform, which renders to a different value in HDR.
-3. **Check the result in Resolve.** Turn on *Show Target*: the frame becomes the target color, through the rest of the pipeline. Render it in the delivery format and read the code values of the file (or Resolve's color picker / a scope on the output). They should be the hex. That render is the final check; the numerical tests do not replace it. Turn *Show Target* off again.
+3. **Check the result in Resolve.** Turn on *Show Target*: the frame becomes the target color, through the rest of the pipeline. Render it in the delivery format and read the code values of the file (or Resolve's color picker / a scope on the output). They should be the hex. That render is the final check; the numerical tests do not replace it. Turn *Show Target* off again. (Checked in DaVinci Resolve Studio 21.1 on macOS: the render through ACES 2.0 SDR Rec.709 returns the hex exactly.)
 
 ## How it works
 
 ### In pictures
 
-Every effect shown below is computed by the DCTL itself, run in its sRGB working space, so code values are shown directly as sRGB, with the target `#8E44AD`. Regenerate with `python3 tools/make_figures.py`.
-
-![A lattice of colors bending toward the target as the strength rises](docs/img/warp.gif)
-
-A lattice of sRGB colors in Oklab at the target's lightness (a faint layer below it), each node drawn in its output color at its output position, while the strength goes from 0 to full and back. Colors near the target (ring) bunch toward it, the pull fades with distance, the grey axis stays put, and the lattice bends but never folds.
+Every effect shown here (and in the animation at the top) is computed by the DCTL itself, run in its sRGB working space with *Target Output* `None - node code values`, so code values are shown directly as sRGB, with the target `#8E44AD`. Regenerate with `python3 tools/make_figures.py`.
 
 ![The same lattice under this DCTL and under a hard qualifier with a hue shift](docs/img/vs-key.gif)
 

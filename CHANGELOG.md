@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-24
+
+The target color now comes out as the exact hex in the delivered master. Checked in DaVinci Resolve Studio 21.1 (macOS): with *Show Target*, a render through the ACES 2.0 SDR Rec.709 Output Transform returns the hex exactly.
+
 ### Added
 - Show Target: fills the frame with the target color in the working space, to check the delivered hex through the Output Transform.
 - *Target Output* control, after *Target Color*: ACES 2.0 SDR Rec.709 (default), ACES 2.0 SDR sRGB, None - node code values. With the ACES 2.0 options the target is the scene color that the ACES 2.0 SDR 100-nit Output Transform (Rec.709 limiting primaries, D65) renders to the hex, computed with the inverse Output Transform plus one refinement step against the forward transform, so the hex comes out in the delivered master. *None* takes the hex as code values in the working space.
@@ -13,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `tools/verify.py`: certification of the target against OpenColorIO 2.6 (hex -> target -> ACES 2.0 view = hex within 0.02/255 over an 8-bit grid and typical brand colors), the existing checks for every Target Output, and Target Output None against the plain decode. CI installs `opencolorio==2.6.0`.
 
 ### Changed
+- Panel order: the Compress controls now come before the Zone ranges (Target, then how hard, then which colors). Saved 0.5.0 grades may need their Compress and Zone values set again.
 - **The Target Color is no longer decoded as sRGB scene-linear.** Saved grades keep their hex but get the default *Target Output* (ACES 2.0 SDR Rec.709), which moves the target. The old behavior is reproduced exactly by the sRGB working space with *None*.
 
 ## [0.5.0] - 2026-11-24
@@ -28,5 +33,6 @@ Initial release.
 - `tools/verify.py`: compiles the DCTL as C++ and checks it numerically (UI spec, matrices, transfer curves, identity, greys, target fixed point, exposure ramps, Jacobian determinant, alpha), run in CI.
 - `tools/gen_matrices.py`: derives the RGB to XYZ(D65) matrices of each working space and the Oklab matrices.
 
-[Unreleased]: https://github.com/maxlainz/elastic-color-compressor/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/maxlainz/elastic-color-compressor/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/maxlainz/elastic-color-compressor/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/maxlainz/elastic-color-compressor/releases/tag/v0.5.0
