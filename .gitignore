@@ -11,6 +11,7 @@ __pycache__/
 *.tif
 *.tiff
 *.png
+!docs/img/*.png
 *.jpg
 *.jpeg
 *.mov

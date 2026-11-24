@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="150" viewBox="0 0 1000 150" font-family="Helvetica, Arial, sans-serif">
+<rect width="1000" height="150" rx="8" fill="rgb(28, 28, 30)"/>
+<defs><marker id="arr" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="rgb(150, 150, 155)"/></marker></defs>
+<rect x="20" y="40" width="120" height="70" rx="6" fill="#3a3a3e" stroke="rgb(150, 150, 155)"/>
+<text x="80" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">Working space</text>
+<text x="80" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">ACEScct, DI, LogC4, ...</text>
+<rect x="160" y="40" width="120" height="70" rx="6" fill="#3a3a3e" stroke="rgb(150, 150, 155)"/>
+<text x="220" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">Linear RGB</text>
+<text x="220" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">decode the curve</text>
+<line x1="142" y1="75.0" x2="157" y2="75.0" stroke="rgb(150, 150, 155)" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="300" y="40" width="120" height="70" rx="6" fill="#3a3a3e" stroke="rgb(150, 150, 155)"/>
+<text x="360" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">Oklab</text>
+<text x="360" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">L, hue, s = ln(C / L)</text>
+<line x1="282" y1="75.0" x2="297" y2="75.0" stroke="rgb(150, 150, 155)" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="440" y="40" width="120" height="70" rx="6" fill="#1f3a5f" stroke="rgb(150, 150, 155)"/>
+<text x="500" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">1. Luma</text>
+<text x="500" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">L pulled to target L</text>
+<line x1="422" y1="75.0" x2="437" y2="75.0" stroke="rgb(150, 150, 155)" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="580" y="40" width="120" height="70" rx="6" fill="#1f3a5f" stroke="rgb(150, 150, 155)"/>
+<text x="640" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">2. Hue</text>
+<text x="640" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">hue pulled to target hue</text>
+<line x1="562" y1="75.0" x2="577" y2="75.0" stroke="rgb(150, 150, 155)" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="720" y="40" width="120" height="70" rx="6" fill="#1f3a5f" stroke="rgb(150, 150, 155)"/>
+<text x="780" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">3. Saturation</text>
+<text x="780" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">s pulled to target s</text>
+<line x1="702" y1="75.0" x2="717" y2="75.0" stroke="rgb(150, 150, 155)" stroke-width="1.5" marker-end="url(#arr)"/>
+<rect x="860" y="40" width="120" height="70" rx="6" fill="#3a3a3e" stroke="rgb(150, 150, 155)"/>
+<text x="920" y="68" fill="rgb(225, 225, 225)" font-size="14" font-weight="bold" text-anchor="middle">Back</text>
+<text x="920" y="88" fill="rgb(150, 150, 155)" font-size="10.5" text-anchor="middle">input + change</text>
+<line x1="842" y1="75.0" x2="857" y2="75.0" stroke="rgb(150, 150, 155)" stroke-width="1.5" marker-end="url(#arr)"/>
+<text x="640" y="136" fill="rgb(150, 150, 155)" font-size="12" text-anchor="middle">each step moves one coordinate with a curve that never goes flat</text>
+<text x="20" y="24" fill="rgb(225, 225, 225)" font-size="14">Per pixel, no key: same space in and out</text>
+</svg>
