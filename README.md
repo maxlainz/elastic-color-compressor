@@ -89,6 +89,21 @@ With *Target Output* on an ACES 2.0 option, a pixel of exactly the target color 
 2. **Resolve's output must be the same transform:** ACES 2.0, SDR 100 nits, Rec.709 limiting primaries, with the Rec.709 BT.1886 (gamma 2.4) display for *ACES 2.0 SDR Rec.709* or the sRGB display for *ACES 2.0 SDR sRGB*. HDR outputs are not implemented: with an HDR output the target is still the scene color defined by the SDR transform, which renders to a different value in HDR.
 3. **Check the result in Resolve.** Turn on *Show Target*: the frame becomes the target color, through the rest of the pipeline. Render it in the delivery format and read the code values of the file (or Resolve's color picker / a scope on the output). They should be the hex. That render is the final check; the numerical tests do not replace it. Turn *Show Target* off again. (Checked in DaVinci Resolve Studio 21.1 on macOS: the render through ACES 2.0 SDR Rec.709 returns the hex exactly.)
 
+## Compared with Resolve's Color Compressor
+
+DaVinci Resolve Studio ships a ResolveFX *Color Compressor* with similar controls (Target Color, Compress Hue / Saturation / Luminance). According to the Resolve manual (*Resolve FX Color* chapter), it moves the hue, saturation and luminance of every pixel toward the target by a fixed fraction: 0.5 is halfway, 1.0 makes every color identical to the target. It is a contrast reduction of each channel around the target as pivot, applied to the whole frame, and the manual recommends isolating the object with a qualifier or window first. That design has consequences this DCTL avoids:
+
+| | Resolve Color Compressor | Elastic Color Compressor |
+|---|---|---|
+| Which colors move | All of them by the same fraction; a qualifier or window limits it | Only colors near the target, fading smoothly with distance: no key needed |
+| Edges | The qualifier's edge: inside moves, outside does not, so a gradient across it gets a step | No key, no edge (see the comparison animation in [In pictures](#in-pictures)) |
+| Hue | A fixed fraction toward the target cannot be continuous all around the hue circle: it must break at the hue opposite the target | Periodic attractor: smooth all around the circle, verified monotonic |
+| Greys | Saturation moves toward the target's, so greys inside the selection take on color | Greys never move |
+| Target | Picked in the timeline's color space | The hex as delivered: exact through the ACES 2.0 SDR Output Transform |
+| Strength 1.0 | Every color becomes the target: texture is lost | Capped at 0.99: colors bunch toward the target but keep their order and texture |
+
+The fraction-toward-the-target behavior and the qualifier recommendation are from the manual; the hue and grey consequences follow from that behavior, not from measurements of Resolve's plugin.
+
 ## How it works
 
 ### In pictures
