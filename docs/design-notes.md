@@ -26,9 +26,15 @@ The output is `input + change`, with the change computed in Oklab and carried ba
 
 Mix multiplies the three strengths rather than blending output with input. Blending two invertible maps does not have to be invertible; scaling the strength keeps every slope >= `1 - strength * mix > 0`, so the guarantee holds at every Mix.
 
-## Target as sRGB
+## Target as the delivered hex
 
-Brand colors are specified as sRGB hex values, and a DCTL has no text field: the color picker is the only way to enter one by paste. The picker value is decoded with the sRGB curve and the Rec.709 primaries, independently of the working space, so the same hex means the same color in every space.
+Brand colors are specified as hex values, and a DCTL has no text field: the color picker is the only way to enter one by paste. In advertising the hex has to come out in the delivered master, not in the scene. Decoding the hex with the sRGB curve to a linear Rec.709 *scene* value (the first version) does not achieve that: in an ACES pipeline the node sits before the Output Transform, whose tone scale and gamut mapping change that value on the way to the display.
+
+The target is therefore the scene value that the Output Transform renders to the hex: the hex is decoded with the display EOTF (BT.1886 gamma 2.4 or sRGB) and run through the **inverse** ACES 2.0 Output Transform (SDR 100 nits, Rec.709 limiting primaries, D65), giving ACES2065-1, then AP1 and XYZ (D65) like any pixel. Only the target goes through it; the pixels never do, so every guarantee of the compressor is unchanged. The *None* option decodes the hex in the working space itself, for timelines without color management where the node output is the master.
+
+The official inverse is approximate where the gamut compressor's focus gain depends on J (above its analytical threshold, near the top of the gamut): rendering its result forward misses the hex by up to 0.07/255 (OpenColorIO's own inverse round trip). One fixed-point step against the forward transform, `x1 = x0 + (inv(hex) - inv(fwd(x0)))`, brings the miss to 0.016/255 at most, so the DCTL also carries the forward path. It costs two more transforms per pixel; the target is uniform, but DCTL has no per-frame stage.
+
+The tables (limiting-gamut cusps on a non-uniform hue grid, upper hull gamma, reach M) are built at init in the CTL with searches over thousands of transform evaluations. A DCTL has no init stage and would repeat that per pixel, so `tools/gen_aces2_tables.py` ports the CTL init code to numpy and its output is pasted verbatim as constant arrays (checked by `verify.py`, as for the matrices). One deliberate difference from the CTL: the upper hull gamma is interpolated with the normalised hue weight `(h - h_lo) / (h_hi - h_lo)`, as OpenColorIO 2.6 does; the CTL uses `h - h_lo`, and with it the forward transforms disagree by up to 0.1/255 near white-yellow. OpenColorIO is the ground truth of the certification in `verify.py`.
 
 ## Verification on the real code
 

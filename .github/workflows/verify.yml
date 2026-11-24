@@ -13,5 +13,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install numpy==2.2.6
+      - run: pip install numpy==2.2.6 opencolorio==2.6.0
       - run: python3 tools/verify.py

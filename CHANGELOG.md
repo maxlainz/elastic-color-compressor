@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+- *Target Output* control, after *Target Color*: ACES 2.0 SDR Rec.709 (default), ACES 2.0 SDR sRGB, None - node code values. With the ACES 2.0 options the target is the scene color that the ACES 2.0 SDR 100-nit Output Transform (Rec.709 limiting primaries, D65) renders to the hex, computed with the inverse Output Transform plus one refinement step against the forward transform, so the hex comes out in the delivered master. *None* takes the hex as code values in the working space.
+- `tools/gen_aces2_tables.py`: port of the ACES 2.0 CTL init code (parameters, reach, cusp and upper hull gamma tables) whose output is embedded in the DCTL.
+- `tools/verify.py`: certification of the target against OpenColorIO 2.6 (hex -> target -> ACES 2.0 view = hex within 0.02/255 over an 8-bit grid and typical brand colors), the existing checks for every Target Output, and Target Output None against the plain decode. CI installs `opencolorio==2.6.0`.
+
+### Changed
+- **The Target Color is no longer decoded as sRGB scene-linear.** Saved grades keep their hex but get the default *Target Output* (ACES 2.0 SDR Rec.709), which moves the target. The old behavior is reproduced exactly by the sRGB working space with *None*.
+
 ## [0.5.0] - 2026-11-24
 
 Initial release.

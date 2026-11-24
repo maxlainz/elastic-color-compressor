@@ -22,7 +22,7 @@ Do not attach client footage or proprietary LUTs.
 
 ### Rules for changes to the DCTL
 
-- Any change must keep `python3 tools/verify.py` ending in `ALL OK` (requires numpy and a C++17 compiler). If you add a new curve or weight, add its check to `tools/verify.py` in the same pull request.
+- Any change must keep `python3 tools/verify.py` ending in `ALL OK` (requires numpy, opencolorio 2.6 and a C++17 compiler). If you add a new curve or weight, add its check to `tools/verify.py` in the same pull request.
 - The invariants in the README ("Design guarantees") are the contract. A change that breaks one needs a documented, measured reason.
 - If you change a primary, a white point or the chromatic adaptation, regenerate the matrices with `python3 tools/gen_matrices.py` and paste the output into the DCTL; `verify.py` detects any mismatch.
 - Adding a working space requires an official, cited transfer function, its primaries and white in `tools/gen_matrices.py`, and its checks in `tools/verify.py` in the same pull request.
